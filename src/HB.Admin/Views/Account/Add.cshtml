@@ -1,0 +1,258 @@
+﻿
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<!-- Css -->
+@section Css{
+    <link href="~/css/admin.css?v=1.0.0" rel="stylesheet" />
+    <link href="~/lib/jquery-select2/css/select2.css" rel="stylesheet" />
+    <link href="~/lib/jquery-select2/theme/select2-bootstrap4.css" rel="stylesheet" />
+}
+<!-- Css -->
+<!-- Scripts -->
+@section Scripts{
+    <script src="~/lib/jquery-validation/jquery.validate.js"></script>
+    <script src="~/lib/jquery-formvalidation/js/formvalidation.js"></script>
+    <script src="~/lib/jquery-select2/js/select2.min.js"></script>
+    <script src="~/lib/jquery-select2/js/i18n/zh-CN.js"></script>
+    <script src="~/lib/md5/md5.min.js"></script>
+    <script type="text/javascript">
+        var validator = $("#form-add").formvalidation({
+            rules: {
+                UserName: {
+                    required: true
+                },
+                NickName: {
+                    required: true
+                },
+                ShowPassword: {
+                    required: true
+                },
+                ShowConfirmPassword: {
+                    required: true,
+                    equalTo: "#ShowPassword"
+                }
+                //Email: {
+                //    required: true
+                //},
+                //MobilePhone: {
+                //    required: true
+                //},
+                //QQ: {
+                //    required: true
+                //},
+                //WeChar: {
+                //    required: true
+                //}
+                , RoleIds: {
+                    required: true
+                }
+
+            },
+            messages: {
+                UserName: "请输入账号名称",
+                NickName: "请输入昵称",
+                ShowPassword: "请输入密码",
+                ShowConfirmPassword: { requird: "请确认密码", equalTo: "两次输入密码不一致" }
+                //Email: "请输入邮箱",
+                //MobilePhone: "请输入手机号",
+                //QQ: "请输入QQ",
+                //WeChar: "请输入微信号"
+                ,
+                RoleIds:"必须分配一个角色"
+            },
+            submitHandler: function (form) {
+                var requestData = {};
+                requestData.UserName = $("#UserName").val().trim();
+                requestData.NickName = $("#NickName").val().trim();
+                requestData.Password = $("#Password").val().trim();
+                requestData.ConfirmPassword = $("#ConfirmPassword").val().trim();
+                requestData.Email = $("#Email").val().trim();
+                requestData.MobilePhone = $("#MobilePhone").val().trim();
+                requestData.QQ = $("#QQ").val().trim();
+                requestData.WeChar = $("#WeChar").val().trim();
+                requestData.RoleIds = $("#RoleIds").val();
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("Add", "Account")",
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    data: requestData,
+                    error: function (request, message, error) {
+                        alert(request);
+                    },
+                    success: function (responseData) {
+                        data = JSON.parse(responseData);
+                        if (data.Status == 1) {
+                            var backToList = $("#btn-save").data("backToList");
+                            if (backToList) {
+                                window.location.href = "@Url.Action("Index", "Account")";
+                            } else {
+                                //清空所有选项
+                                $(form).find("input").each(function(index, element){
+                                    element.val("");
+                                });
+                            }
+                        } else {
+                            alert(data.Message)
+                        }
+                    }//success
+                });//ajax
+            }//submitHandler
+        }); //validator
+        $("#btn-save").click(function () {
+            $(this).data("backToList",true);
+            if (validator.form()) {
+                $("#form-add").submit();
+            }
+        });
+
+        $("#btn-save-add").click(function () {
+            $("#btn-save").data("backToList", false);
+            if (validator.form()) {
+                $("#form-add").submit();
+            }
+        });
+
+        $(function () {
+            //初始化
+            $.ajax({ //失败会有提示，不用处理
+                cache: true,
+                url: "@Url.Action("GetAllRoles", "Role")",
+                dataType: 'json',
+                success: function (data) {
+                    var results = JSON.parse(data).Rows;
+                    $("#RoleIds").select2({
+                        placeholder: "请添加角色",//占位符
+                        theme: 'bootstrap4',//主题
+                        language: 'zh-CN',//语音
+                        allowClear: true,//出现清空按钮
+                        closeOnSelect: false,//选择后不关闭选项
+                        multiple: true,      //多选择
+                        data: results
+                    });//select2;
+                },//success
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("获取角色失败，请刷新页面");
+                    console.log(errorThrown);
+                }
+            });//ajax
+
+
+            $("#ShowPassword").on("change", function () {
+                $("#Password").val(md5($(this).val()));
+            });
+
+            $("#ShowConfirmPassword").on("change", function () {
+                $("#ConfirmPassword").val(md5($(this).val()));
+            });
+        });
+
+    </script>
+}
+<!-- Scripts -->
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <a id="btn-list" href="@Url.Action("Index","Account")" class="btn btn-info btn-primary">
+                    <i class="fas fa-angle-left"></i>
+                    返回账号列表
+                </a>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Add","Account")">新增账号</a></li>
+                    <li class="breadcrumb-item active">账号权限</li>
+                    <li class="breadcrumb-item active">设置</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<section class="content">
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-green">
+                <div class="card-header link" data-card-widget="collapse">
+                    <h3 class="card-title">新增账号</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="折叠">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="form-add">
+                        <div class="form-row ">
+                            <div class="form-group col-6">
+                                <label for="UserName" class=" col-form-label">账号名称</label>
+                                <input type="text" class="form-control" id="UserName" name="UserName" placeholder="账号名称">
+                            </div>
+                            <div class="form-group  col-6">
+                                <label for="NickName" class="col-form-label">昵称</label>
+                                <input type="text" class="form-control" id="NickName" name="NickName" placeholder="昵称">
+                            </div>
+                        </div>
+
+                        <div class="form-row ">
+                            <div class="form-group col-6">
+                                <label for="Password" class=" col-form-label">密码</label>
+                                <input type="password" class="form-control" id="ShowPassword" name="ShowPassword" placeholder="密码">
+                                <input type="hidden" id="Password" name="Password">
+                            </div>
+                            <div class="form-group  col-6">
+                                <label for="ConfirmPassword" class="col-form-label">确认密码</label>
+                                <input type="password" class="form-control" id="ShowConfirmPassword" name="ShowConfirmPassword" placeholder="确认密码">
+                                <input type="hidden" id="ConfirmPassword" name="ConfirmPassword">
+                            </div>
+                        </div>
+
+                        <div class="form-row ">
+                            <div class="form-group col-6">
+                                <label for="Email" class=" col-form-label">邮箱</label>
+                                <input type="text" class="form-control" id="Email" name="Email" placeholder="邮箱">
+                            </div>
+                            <div class="form-group  col-6">
+                                <label for="MobilePhone" class="col-form-label">手机号</label>
+                                <input type="text" class="form-control" id="MobilePhone" name="MobilePhone" placeholder="手机号">
+                            </div>
+                        </div>
+
+                        <div class="form-row ">
+                            <div class="form-group col-6">
+                                <label for="QQ" class=" col-form-label">QQ</label>
+                                <input type="text" class="form-control" id="QQ" name="QQ" placeholder="QQ">
+                            </div>
+                            <div class="form-group  col-6">
+                                <label for="WeChar" class="col-form-label">微信号</label>
+                                <input type="text" class="form-control" id="WeChar" name="WeChar" placeholder="微信号">
+                            </div>
+                        </div>
+
+                        <div class="form-row ">
+                            <div class="form-group col-12">
+                                <label for="RoleIds" class=" col-form-label">角色</label>
+                                <select class="form-control" id="RoleIds" name="RoleIds"></select>
+                            </div>
+                        </div>
+
+                        <div class="row justify-content-center ">
+                            <input type="button" id="btn-save" value="保存" class="btn btn-success mr-5 " style="width:8rem;">
+                            <input type="button" id="btn-save-add" value="保存/添加" class="btn btn-success" style="width:8rem;">
+                        </div>
+                    </form>
+
+                </div>
+                <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+        </div>
+    </div>
+</section>
+<!-- /.content -->

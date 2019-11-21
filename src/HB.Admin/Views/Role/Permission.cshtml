@@ -1,0 +1,395 @@
+﻿@model HB.Models.SysRole
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<!-- Css -->
+@section Css{
+    <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css?v=1.15.4" />
+    <link href="~/css/admin.css?v=1.0.0" rel="stylesheet" />
+    <link href="~/lib/jquery-treegrid/css/jquery.treegrid.css" rel="stylesheet" />
+}
+<!-- Css -->
+<!-- Scripts -->
+@section Scripts{
+    <script type="text/javascript" src="~/lib/bootstrap-table/bootstrap-table.min.js?v=1.15.4"></script>
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+    <script src="~/lib/jquery-treegrid/js/jquery.treegrid.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/treegrid/bootstrap-table-treegrid.js"></script>
+    <script type="text/javascript">
+
+        @{
+            //获取关联的菜单
+            string strArry = string.Empty;
+            strArry += "[";
+            foreach (var model in Model.Menus)
+            {
+                strArry += (model.Id + ",");
+            }
+            if (Model.Menus.Count() > 0)
+            {
+                strArry = strArry.Substring(0, strArry.Length - 1);
+            }
+
+            strArry += "]";
+            ViewBag.Menus = strArry;
+        }
+            var roleMenus =@ViewBag.Menus;
+        //初始化
+        $table = $('#list-menu-table');
+        var InitTable = function (url) {
+            //先销毁表格
+            $table.bootstrapTable("destroy");
+            //加载表格
+            $table.bootstrapTable({
+                locale: 'zh-CN',//语言选择
+                //searchAlign: 'left',
+                //search: true,   //显示隐藏搜索框
+                showHeader: true,     //是否显示列头
+                //classes: 'table-no-bordered',
+                showLoading: true,
+                undefinedText: '',
+                showFullscreen: false,
+                //paginationHAlign: 'right',
+                silent: true,
+                url: url,
+                method: 'post',                      //请求方式（*）
+                //toolbar: '#toolbar',                //工具按钮用哪个容器
+                //toolbarAlign: '',                //自定义工具栏位置 默认left.  right 不赋值就独立成行
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination:false,                   //是否显示分页（*）
+                sortable: false,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                queryParamsType: '',                 //配合queryParams使用，传递的默认参数pageSize, pageNumber, searchText, sortName, sortOrder
+                queryParams: queryParams,           //传递参数（*）
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                       //初始化加载第一页，默认第一页
+                pageSize: 1000,                       //每页的记录行数（*）
+                pageList: [10, 25, 50, 100],        //可供选择的每页的行数（*） 如果最小的10页大于返回的数据总条数也不会显示
+                showPaginationSwitch: false,         //默认为false隐藏每页数据条数选择，设为true显示
+                paginationLoop: true,             //是否无限循环
+                search: false,                      //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
+                strictSearch: true,
+                showColumns: false,                  //是否显示所有的列
+                showRefresh: false,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                //height: 680,                        //行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度
+                uniqueId: "Id",                     //每一行的唯一标识，一般为主键列
+                idField:"Id",
+                showToggle: false,                    //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                showExport: false,
+                //exportDataType: 'all',
+                exportDataType: "selected",        //导出checkbox选中的行数
+                totalField: "Total",                  //默认为total  为了统一大小写
+                dataField: "Rows",                    //默认为rows 为了统一大小写
+                //detailViewByClick: true,               //设置后 配合detailFormatter 可以获取明细信息
+                //detailView: true,                       //设置后 配合detailFormatter
+                checkboxHeader:true,                        //全选功能
+                columns: [
+                    {
+                        checkbox: 'true',
+                        formatter: 'checkFormatter'
+                    },
+                    {
+                        field: 'MenuName',
+                        title: '菜单名称'
+                    }, {
+                        field: 'MenuSystermName',
+                        title: '菜单系统名称'
+                    },{
+                        field: 'MenuType',
+                        title: '菜单类型',
+                        formatter: 'typeFormatter'
+                    }, {
+                        field: 'MenuIcon',
+                        title: '菜单图标',
+                        formatter: 'MenuIconFormatter'
+
+                    }, {
+                        field: 'MenuUrl',
+                        title: '菜单链接'
+                    }, {
+                        field: 'MenuSort',
+                        title: '菜单排序'
+                    },{
+                        field: 'MenuRemark',
+                        title: '菜单说明'
+                    },
+                    {
+                        field: 'Id',
+                        title: '序号',
+                        visible: false
+                    }
+                ],
+                onCheck: checkFunction,
+                onUncheck: onUncheckFunction,
+                responseHandler: function (res) {
+                    return JSON.parse(res);//转成json否则不能显示
+                },
+                onLoadSuccess: function (data) {//data responseHandler已经处理好的数据
+                    if (data.Status == 0) {
+                        alert("查询失败，错误信息：" + data.Message);
+                    }
+                },
+                onLoadError: function (status, jqXHR) {
+                    alert("查询异常!");
+                },
+                treeShowField: 'MenuName',
+                parentIdField: 'ParentMenuId',
+                onPostBody: function () {
+                    var columns = $table.bootstrapTable('getOptions').columns
+
+                    if (columns && columns[0][1].visible) {
+                        $table.treegrid({
+                            expanderExpandedClass: 'fas fa-caret-square-down',
+                            expanderCollapsedClass: 'fas fa-caret-square-up',
+                            treeColumn: 1,
+                            onChange: function () {
+                                $table.bootstrapTable('resetWidth')
+                            }
+                        })
+                    }
+                }
+            });
+            return InitTable;
+        };
+
+
+        //菜单类型
+         function typeFormatter(value, row, index) {
+            return row.Type==1?"菜单":"功能";
+        };
+
+        //菜单图标
+        function MenuIconFormatter(value, row, index) {
+            return '<i class="' + row.MenuIcon + '"></i> ' + row.MenuIcon ;
+        };
+
+        //选中
+        function checkFormatter(value, row, index) {
+            //return false true
+            var checked = false;
+            $.each(roleMenus, function (index, item) {
+                if (row.Id == item) {
+                    checked = true;
+                    return;
+                }
+            });
+            return checked;
+        };
+
+        // 查询参数
+        function queryParams(params) {
+            return params
+        }
+
+        //保存
+        $("#btn-save").click(function () {
+            $(this).data("backToList", true);
+            Save();
+        });
+        //保存继续编辑
+        $("#btn-save-edit").click(function () {
+            $("#btn-save").data("backToList", false);
+            Save();
+        });
+
+         //保存
+        function Save() {
+            var selecteds = $table.bootstrapTable('getSelections');
+            if (!selecteds || selecteds.length <= 0) {
+                alert("没有选中任何行");
+                return;
+            }
+            var menuIds = [];
+            $.each(selecteds, function (index, item) {
+                menuIds.push(item.Id);
+            });
+            var requestData = {};
+            requestData.Id =@Model.Id;
+            requestData.menuIds = menuIds;
+             $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("Permission", "Role")",
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    data:requestData,
+                    error: function (request, message, error) {
+                        alert(request);
+                    },
+                    success: function (responseData) {
+                        data = JSON.parse(responseData);
+                         if (data.Status == 1) {
+                            var backToList = $("#btn-save").data("backToList");
+                            if (backToList) {
+                                window.location.href = "@Url.Action("Index", "Role")";
+                            } else {
+                                alert("保存成功，请继续修改");
+                            }
+                        } else {
+                            alert(data.Message)
+                        }
+                    }//success
+            });//ajax
+
+        };
+
+        //选中事件
+        function checkFunction(row, $element) {
+            ////父级祖父级选中
+            //标识父级选中，不在触发事件
+            var isOnCheck = $element.data("isOnCheck");
+            if (isOnCheck != null && isOnCheck != undefined && isOnCheck == false) {
+                return;
+            }
+
+            $tr = $($element).closest("tr");//从当前元素往上找，找到第一个tr即返回，如果没找到返回空jQuery对象
+            var parentNodes = getThisAllParentNodes($tr);
+            $.each(parentNodes, function (index, $item) {
+                var clickIndex = $element.attr("data-index");
+                var rowIndex = $item.attr("data-index");
+                if (clickIndex != rowIndex) {
+                    $item.find('input[name="btSelectItem"]').first().data("isOnCheck", false);
+                    $table.bootstrapTable('check', rowIndex);
+                }
+            });
+            //所有子孙选中
+            var childNodes = getThisAllChildNodes($tr);
+            $.each(childNodes, function (index, $item) {
+                var clickIndex = $element.attr("data-index");
+                var rowIndex = $item.attr("data-index");
+                if (clickIndex != rowIndex) {
+                    $table.bootstrapTable('check', rowIndex)
+                }
+            });
+        }
+        //取消选中
+        function onUncheckFunction(row, $element) {
+            //所有子孙取消选中
+            $tr = $($element).closest("tr");//从当前元素往上找，找到第一个tr即返回，如果没找到返回空jQuery对象
+            var childNodes = getThisAllChildNodes($tr);
+            $.each(childNodes, function (index, $item) {
+                var clickIndex = $element.attr("data-index");
+                var rowIndex = $item.attr("data-index");
+                if (clickIndex != rowIndex) {
+                    $table.bootstrapTable('uncheck', rowIndex)
+                }
+            });
+        }
+
+        //获取此节点的所有子孙节点（递归遍历） 返回数组包含当前节点
+        function getThisAllChildNodes($tr) {
+            var nodeArry = [];
+            var $nodes = $tr.treegrid('getChildNodes');
+
+            nodeArry = nodeArry.concat($tr);//添加当前的
+
+            if ($nodes == null || $nodes.length <= 0) {
+                return nodeArry;
+            }
+
+            $.each($nodes, function (index, node) {
+                nodeArry = nodeArry.concat(getThisAllChildNodes($(node)));
+            });
+
+            return nodeArry;
+        }
+        //获取此节点的所有父祖父节点（递归遍历） 返回数组包含当前节点
+        function getThisAllParentNodes($tr) {
+            var nodeArry = [];
+            var $nodes = $tr.treegrid('getParentNode');
+
+            nodeArry = nodeArry.concat($tr);//添加当前的
+
+            if ($nodes == null || $nodes.length <= 0) {
+                return nodeArry;
+            }
+
+            $.each($nodes, function (index, node) {
+                nodeArry = nodeArry.concat(getThisAllParentNodes($(node)));
+            });
+
+            return nodeArry;
+        }
+
+        $(function () {
+            url = '@Url.Action("List","Menu")';
+            InitTable(url);
+        });
+
+    </script>
+}
+<!-- Scripts -->
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <a id="btn-add-menu" href="@Url.Action("Index","Role")" class="btn btn-info btn-primary">
+                    <i class="fas fa-angle-left"></i>
+                    返回角色列表
+                </a>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Permission","Role",new { Id=Model.Id})">角色权限配置</a></li>
+                    <li class="breadcrumb-item active">账号权限</li>
+                    <li class="breadcrumb-item active">设置</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+
+                <div class="card card-gray">
+                    <div class="card-header link border-0 " data-card-widget="collapse">
+                        <div class="d-flex justify-content-between">
+                            <h3 class="card-title">角色权限配置</h3><div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="toolbar">
+                        </div>
+                        <table id="list-menu-table"></table>
+                        <div class="row justify-content-center mt-5">
+                            <input type="button" id="btn-save" value="保存" class="btn btn-success mr-5 " style="width:8rem;">
+                            <input type="button" id="btn-save-edit" value="保存/编辑" class="btn btn-success" style="width:8rem;">
+                        </div>
+                        <input type="hidden" value="@Model.Id" />
+                    </div>
+                </div>
+                <!-- /.card -->
+
+            </div>
+        </div>
+        <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+</div>
+<!-- /.content -->
+
+<div id="deleteInfo" class="modal fade">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="alert alert-success" role="alert">
+                删除成功！
+            </div>
+        </div>
+    </div>
+</div>

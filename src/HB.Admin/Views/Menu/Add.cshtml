@@ -1,0 +1,319 @@
+﻿
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<!-- Css -->
+@section Css{
+    <link href="~/css/admin.css?v=1.0.0" rel="stylesheet" />
+}
+<!-- Css -->
+<!-- Scripts -->
+@section Scripts{
+    <script src="~/lib/jquery-validation/jquery.validate.js"></script>
+    <script src="~/lib/jquery-formvalidation/js/formvalidation.js"></script>
+    <script type="text/javascript">
+        var menuData = [];
+        var validator  = $("#form-add-menu").formvalidation({
+            rules: {
+                menuName: {
+                    required: true
+                },
+                menuSystermName: {
+                    required: true
+                },
+                menuIcon: {
+                    required: true
+                },
+                menuSort: {
+                    required: true
+                },
+                menuUrl: {
+                    required: true
+                }
+            },
+            messages: {
+                userName: "请输入菜单名称",
+                password: "请输入菜单系统名称",
+                menuIcon: "请选择菜单图标",
+                menuSort: "请输入菜单排序",
+                menuUrl: "请输入菜单地址"
+            },
+            submitHandler: function (form) {
+                var requestData = {};
+                requestData.menuName = $("#menuName").val().trim();
+                requestData.menuSystermName = $("#menuSystermName").val().trim();
+                requestData.firstParentMenuId = $("#firstParentMenuId").val().trim();
+                requestData.secondParentMenuId = $("#secondParentMenuId").val().trim();
+                requestData.thirdParentMenuId = $("#thirdParentMenuId").val().trim();
+                requestData.menuIcon = $("#menuIcon").val().trim();
+                requestData.menuSort = $("#menuSort").val().trim();
+                requestData.menuUrl = $("#menuUrl").val().trim();
+                requestData.menuRemark = $("#menuRemark").val().trim();
+                requestData.menuType = $("input[name='MenuType']:checked").val();
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("Add", "Menu")",
+                    dataType: "json",
+                    //contentType: "application/json;charset=utf-8",
+                    contentType: "application/x-www-form-urlencoded",
+                    //data: JSON.stringify(requestData),
+                    data: $(form).serialize(),
+                    error: function (request, message, error) {
+                        alert(request);
+                    },
+                    success: function (responseData) {
+                        data = JSON.parse(responseData);
+                        if (data.Status == 1) {
+                            var backToList = $("#btn-save").data("backToList");
+                            if (backToList) {
+                                window.location.href = "@Url.Action("Index", "Menu")";
+                            } else {
+                                //清空所有选项
+                                $("#menuName").val("");
+                                $("#menuSystermName").val("");
+                                $("#firstParentMenuId").val(-1);
+                                $("#menuIcon").val("");
+                                $("#menuSort").val(0);
+                                $("#menuUrl").val("");
+                                $("#menuRemark").val("");
+                                $("input[name='MenuType'][value='1']").attr("checked", "true");
+                            }
+                        } else {
+                            if (data.Code == "menu_exsit_menuSystermName") {
+                                alert("菜单系统名称已存在");
+                                $("#menuSystermName").focus();
+                                return;
+                            }
+                            alert(data.Message)
+                        }
+                    }//success
+                });//ajax
+            }//submitHandler
+        }); //validator
+        $("#btn-save").click(function () {
+            $(this).data("backToList",true);
+            if (validator.form()) {
+                $("#form-add-menu").submit();
+            }
+        });
+
+        $("#btn-save-add").click(function () {
+            $("#btn-save").data("backToList", false);
+            if (validator.form()) {
+                $("#form-add-menu").submit();
+            }
+        });
+
+        //一级菜单选择
+        $("#firstParentMenuId").on("change",function () {
+            var selectValue = $(this).val();
+            var secondData = $.map(menuData, function (item) {
+                return item.ParentMenuId == selectValue ? item : null;
+            });
+            buildSeleteOption($("#secondParentMenuId"), secondData, 2);
+            setMenuSystemName(selectValue);
+        });
+        //二级菜单选择
+        $("#secondParentMenuId").on("change",function () {
+            var selectValue = $(this).val();
+            var thirdData = $.map(menuData, function (item) {
+                return item.ParentMenuId == selectValue ? item : null;
+            });
+            buildSeleteOption($("#thirdParentMenuId"), thirdData, 3);
+            setMenuSystemName(selectValue);
+        });
+
+        //三级级菜单选择
+        $("#thirdParentMenuId").on("change", function () {
+            var selectValue = $(this).val();
+            if (selectValue && selectValue > 0) {
+                $("input[name='MenuType'][value='1']").attr("checked", false);
+                $("input[name='MenuType'][value='2']").attr("checked", true);
+            } else {
+                $("input[name='MenuType'][value='1']").attr("checked", true);
+                $("input[name='MenuType'][value='2']").attr("checked", false);
+            }
+            setMenuSystemName(selectValue);
+        });
+
+        //构建下拉选项
+        function buildSeleteOption($select, data, deep) {
+            var strDeep = "一";
+            switch (deep) {
+                case 1:
+                    strDeep = "一";
+                    break;
+                case 2:
+                    strDeep = "二";
+                    break;
+                case 3:
+                    strDeep = "三";
+                    break;
+            };
+            $select.html("");
+            var selectOption = '<option value="-2">请选择</option>';
+            selectOption += '<option value="-1">作为' + strDeep+'级菜单</option>';
+            $.each(data, function (index, item, value) {
+                selectOption += '<option value="' + item.Id + '">' + item.MenuName + '</option>';
+            });
+            $select.append(selectOption);
+            $select.trigger("change");
+        }
+        //系统名称自动填上
+        function setMenuSystemName(id) {
+            $.each(menuData, function (index, item) {
+                if (item.Id == id) {
+                    $("#menuSystermName").val(item.MenuSystermName);
+                }
+            });
+        }
+        $(function () {
+            //获取全部菜单
+             $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("List", "Menu")",
+                    dataType: "json",
+                    //contentType: "application/json;charset=utf-8",
+                    //data: "parentId=" + parentId,
+                    error: function (request, message, error) {
+                        alert("获取菜单失败，请刷新页面！");
+                    },
+                    success: function (responseData) {
+                        data = JSON.parse(responseData);
+                        if (data.Status == 1) {
+                            menuData = data.Rows;
+                           var firstData= $.map(menuData, function (item) {
+                               return item.ParentMenuId == 0 ? item: null;
+                            });
+                            buildSeleteOption($("#firstParentMenuId"), firstData,1);
+                        } else {
+                            alert("获取菜单失败，请刷新页面！");
+                        }
+
+                    }//success
+            });//ajax
+        });//ready
+
+
+    </script>
+}
+<!-- Scripts -->
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <a id="btn-menu-list" href="@Url.Action("Index","Menu")" class="btn btn-info btn-primary">
+                    <i class="fas fa-angle-left"></i>
+                    返回菜单列表
+                </a>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Add","Menu")">新增菜单</a></li>
+                    <li class="breadcrumb-item active">账号权限</li>
+                    <li class="breadcrumb-item active">设置</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<section class="content">
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-green">
+                <div class="card-header link" data-card-widget="collapse">
+                    <h3 class="card-title">新增菜单</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="form-add-menu">
+                        <div class="form-row ">
+                            <div class="form-group col-6">
+                                <label for="menuName" class=" col-form-label">菜单名称</label>
+                                <input type="text" class="form-control" id="menuName" name="menuName" placeholder="菜单名称">
+                            </div>
+                            <div class="form-group  col-6">
+                                <label for="menuSort" class="col-form-label">排序</label>
+                                <input type="text" class="form-control" id="menuSort" name="menuSort" placeholder="0" value="0">
+                            </div>
+
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label for="firstParentMenuId">一级菜单</label>
+                                <select id="firstParentMenuId" name="firstParentMenuId" class="form-control"></select>
+                            </div>
+                            <div class="form-group col-6 hidden">
+                                <label for="secondParentMenuId">二级菜单</label>
+                                <select id="secondParentMenuId" name="secondParentMenuId" class="form-control"></select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label for="thirdParentMenuId">三级菜单<em class="text-red">（如选择了，则此菜单类型为功能）</em></label>
+                                <select id="thirdParentMenuId" name="thirdParentMenuId" class="form-control"></select>
+                            </div>
+
+                            <div class="form-group col-6">
+                                <label>菜单类型</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="MenuType" id="MenuType1" value="1" checked="checked">
+                                        <label class="form-check-label" for="MenuType1">菜单</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="MenuType" id="MenuType2" value="2">
+                                        <label class="form-check-label" for="MenuType2">功能</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group  col-6">
+                                <label for="menuSystermName" class="col-form-label">菜单系统名称</label>
+                                <input type="text" class="form-control" id="menuSystermName" name="menuSystermName" placeholder="菜单系统名称">
+                            </div>
+                            <div class="form-group col-6">
+                                <label for="menuIcon" class=" col-form-label ">菜单图标</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="menuIcon" name="menuIcon" placeholder="菜单图标">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-info" type="button" id="button-addon2">选择图标</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="menuUrl" class="col-form-label">菜单地址</label>
+                            <input type="text" class="form-control" id="menuUrl" name="menuUrl" placeholder="菜单地址" value="#">
+                        </div>
+                        <div class="form-group">
+                            <label for="menuRemark" class=" col-form-label">菜单说明</label>
+                            <textarea class="form-control" id="menuRemark" name="menuRemark" placeholder="菜单说明"></textarea>
+                        </div>
+
+                        <div class="row justify-content-center ">
+                            <input type="button" id="btn-save" value="保存" class="btn btn-success mr-5 " style="width:8rem;">
+                            <input type="button" id="btn-save-add" value="保存/添加" class="btn btn-success" style="width:8rem;">
+                        </div>
+                    </form>
+
+                </div>
+                <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+        </div>
+    </div>
+</section>
+<!-- /.content -->

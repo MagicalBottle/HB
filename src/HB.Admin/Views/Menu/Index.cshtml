@@ -1,0 +1,368 @@
+﻿
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<!-- Css -->
+@section Css{
+    <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css?v=1.15.4" />
+    <link href="~/css/admin.css?v=1.0.0" rel="stylesheet" />
+    <link href="~/lib/jquery-treegrid/css/jquery.treegrid.css" rel="stylesheet" />
+}
+<!-- Css -->
+<!-- Scripts -->
+@section Scripts{
+    <script type="text/javascript" src="~/lib/bootstrap-table/bootstrap-table.min.js?v=1.15.4"></script>
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+    <script src="~/lib/jquery-treegrid/js/jquery.treegrid.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/treegrid/bootstrap-table-treegrid.js"></script>
+    <script type="text/javascript">
+        //初始化
+        $table = $('#list-menu-table');
+        var InitTable = function (url) {
+            //先销毁表格
+            $table.bootstrapTable("destroy");
+            //加载表格
+            $table.bootstrapTable({
+                locale: 'zh-CN',//语言选择
+                //searchAlign: 'left',
+                //search: true,   //显示隐藏搜索框
+                showHeader: true,     //是否显示列头
+                //classes: 'table-no-bordered',
+                showLoading: true,
+                undefinedText: '',
+                showFullscreen: true,
+                toolbarAlign: 'left',
+                paginationHAlign: 'right',
+                silent: true,
+                url: url,
+                method: 'post',                      //请求方式（*）
+                toolbar: '#toolbar',                //工具按钮用哪个容器
+                toolbarAlign: '',                //自定义工具栏位置 默认left.  right 不赋值就独立成行
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination:false,                   //是否显示分页（*）
+                sortable: false,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                queryParamsType: '',                 //配合queryParams使用，传递的默认参数pageSize, pageNumber, searchText, sortName, sortOrder
+                queryParams: queryParams,           //传递参数（*）
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                       //初始化加载第一页，默认第一页
+                pageSize: 10,                       //每页的记录行数（*）
+                pageList: [10, 25, 50, 100],        //可供选择的每页的行数（*） 如果最小的10页大于返回的数据总条数也不会显示
+                showPaginationSwitch: true,         //默认为false隐藏每页数据条数选择，设为true显示
+                paginationLoop: true,             //是否无限循环
+                search: false,                      //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
+                strictSearch: true,
+                showColumns: true,                  //是否显示所有的列
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                //height: 680,                        //行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度
+                uniqueId: "Id",                     //每一行的唯一标识，一般为主键列
+                idField:"Id",
+                showToggle: false,                    //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                showExport: true,
+                //exportDataType: 'all',
+                exportDataType: "selected",        //导出checkbox选中的行数
+                totalField: "Total",                  //默认为total  为了统一大小写
+                dataField: "Rows",                    //默认为rows 为了统一大小写
+                //detailViewByClick: true,               //设置后 配合detailFormatter 可以获取明细信息
+                //detailView: true,                       //设置后 配合detailFormatter
+                columns: [
+                    {
+                        field: 'MenuName',
+                        title: '菜单名称'
+                    }, {
+                        field: 'MenuSystermName',
+                        title: '菜单系统名称'
+                    },{
+                        field: 'MenuType',
+                        title: '菜单类型',
+                        formatter: 'typeFormatter'
+                    }, {
+                        field: 'MenuIcon',
+                        title: '菜单图标',
+                        formatter: 'MenuIconFormatter'
+
+                    }, {
+                        field: 'MenuUrl',
+                        title: '菜单链接'
+                    }, {
+                        field: 'MenuSort',
+                        title: '菜单排序'
+                    },{
+                        field: 'MenuRemark',
+                        title: '菜单说明'
+                },{
+                    field: 'action',
+                    title: '操作',
+                    width: 110,
+                    formatter: 'operateFormatter'       //自定义表格内容，字符串内是方法名称
+                    }
+                ],
+                responseHandler: function (res) {
+                    return JSON.parse(res);//转成json否则不能显示
+                },
+                onLoadSuccess: function (data) {//data responseHandler已经处理好的数据
+                    if (data.Status == 0) {
+                        alert("查询失败，错误信息：" + data.Message);
+                    }
+                },
+                onLoadError: function (status, jqXHR) {
+                    alert("查询异常!");
+                },
+                treeShowField: 'MenuName',
+                parentIdField: 'ParentMenuId',
+                onPostBody: function () {
+                    var columns = $table.bootstrapTable('getOptions').columns
+
+                    if (columns && columns[0][1].visible) {
+                        $table.treegrid({
+                            expanderExpandedClass: 'fas fa-caret-square-down',
+                            expanderCollapsedClass: 'fas fa-caret-square-up',
+                            treeColumn: 0,
+                            onChange: function () {
+                                $table.bootstrapTable('resetWidth')
+                            }
+                        })
+                    }
+                }
+            });
+            return InitTable;
+        };
+
+        // 单元格，自定义设置
+        // 操作按钮
+        function operateFormatter(value, row, index) {
+            return [
+                '<a class="btn btn-sm btn-primary" href="@Url.Action("Edit","Menu")/'+row.Id+'" title="编辑"><i class="fas fa-edit"></i></a>　',
+                '<button class="btn btn-sm btn-danger" onclick="deleteMenu(event)" title="删除"><i class="fas fa-trash-alt"></i></button>'
+            ].join('');
+        };
+
+        //菜单类型
+         function typeFormatter(value, row, index) {
+            return row.Type==1?"菜单":"功能";
+        };
+
+        //菜单图标
+        function MenuIconFormatter(value, row, index) {
+            return '<i class="' + row.MenuIcon + '"></i> ' + row.MenuIcon ;
+        };
+
+
+        // 查询参数
+        function queryParams(params) {
+            //params.menuName = $("#menuName").val().trim();
+            //params.menuSystermName = $("#menuSystermName").val().trim();
+            return params
+        }
+         //删除数据
+        function deleteMenu(e) {
+            e.stopPropagation();
+            $tr = $(e.target).closest("tr");//从当前元素往上找，找到第一个tr即返回，如果没找到返回空jQuery对象            
+            if (!$tr || $tr.length<=0) {
+                alert('没有找到删除行');
+                return;
+            }
+
+            var $nodes = getThisAllChildNodes($tr);//获取所有子节点
+            var menuIds = [];
+            $.each($nodes, function (index, node) {
+                var $node = $(node);
+                var id = $node.attr("data-uniqueid");
+                menuIds.push(parseInt(id));
+            });
+
+            var isDelete = true;
+            if (menuIds.length > 1) {
+                if (confirm('您删除的菜单包含子菜单，子菜单会一起删除。确定要删除吗？') == true) {
+                    isDelete = true;
+                } else {
+                    isDelete = false;
+                    return;
+                }
+            }            
+            if (isDelete) {
+                //aja异步请求
+                $.ajax({
+                    url: '@Url.Action("Delete","Menu")',
+                    type: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    data: { "menuIds": menuIds},
+                    success: function (responseData) {
+                        data = JSON.parse(responseData);
+                        if (data.Status == 1) {
+                                alert("删除成功");
+                                InitTable(url);
+                            } else {
+                                alert('数据删除失败' + data);
+                            }
+                        },//success
+                    error: function (data) {
+                            alert('数据删除失败' + data);
+                        }
+                });//ajax
+            }
+        };
+        //获取此节点的所有子孙节点（递归遍历） 返回数组包含当前节点
+        function getThisAllChildNodes  ($tr) {
+            var nodeArry = [];
+            var $nodes = $tr.treegrid('getChildNodes');
+
+            nodeArry=nodeArry.concat($tr);//添加当前的
+
+            if ($nodes == null || $nodes.length <= 0) {
+                return nodeArry;
+            }
+
+            $.each($nodes, function (index, node) {
+                nodeArry = nodeArry.concat(getThisAllChildNodes($(node)));
+            });
+
+            return nodeArry;
+        }
+        //获取此节点的所有父祖父节点（递归遍历） 返回数组包含当前节点
+        function getThisAllParentNodes($tr) { 
+            var nodeArry = [];
+            var $nodes = $tr.treegrid('getParentNode');
+
+            nodeArry = nodeArry.concat($tr);//添加当前的
+
+            if ($nodes == null || $nodes.length <= 0) {
+                return nodeArry;
+            }
+
+            $.each($nodes, function (index, node) {
+                nodeArry = nodeArry.concat(getThisAllParentNodes($(node)));
+            });
+
+            return nodeArry;
+        }
+
+        $("#btn_query").click( function () {
+            InitTable(url);
+        });
+
+        //回车键
+        document.onkeydown = function (e) {
+            if (!e) e = window.event; //火狐中是 window.event
+            if ((e.keyCode || e.which) == 13) {
+                var query = document.getElementById("btn_query");
+                query.focus();
+                query.click();
+            }
+        };
+        $(function () {
+            url = '@Url.Action("List","Menu")';
+            InitTable(url);
+        });
+
+    </script>
+}
+<!-- Scripts -->
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <a id="btn-add-menu" href="@Url.Action("Add","Menu")" class="btn btn-info btn-primary">
+                    <i class="fas fa-plus"></i>
+                    新增
+                </a>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index","Menu")">菜单</a></li>
+                    <li class="breadcrumb-item active">账号权限</li>
+                    <li class="breadcrumb-item active">设置</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+
+                <div class="card card-gray">
+                    <div class="card-header link border-0 " data-card-widget="collapse">
+                        <div class="d-flex justify-content-between">
+                            <h3 class="card-title">菜单列表</h3><div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="toolbar">
+                            <!-- 搜索框-->
+                            @*<div class="card card-green">
+                                    <div class="card-header link border-0 " data-card-widget="collapse">
+                                        <div class="d-flex justify-content-between">
+                                            <h3 class="card-title">搜索项</h3><div class="card-tools">
+                                                <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse">
+                                                    <i class="fas fa-minus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-row align-items-center">
+                                            <div class="col-6">
+                                                <div class="input-group mb-2">
+                                                    <div class="input-group-prepend">
+                                                        <div class="input-group-text">菜单名称</div>
+                                                    </div>
+                                                    <input id="menuName" name="menuName" type="text" class="form-control" placeholder="菜单名称" aria-label="Username" aria-describedby="basic-addon1">
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="input-group mb-2">
+                                                    <div class="input-group-prepend">
+                                                        <div class="input-group-text">菜单系统名称</div>
+                                                    </div>
+                                                    <input id="menuSystermName" name="menuSystermName" type="text" class="form-control" placeholder="菜单系统名称" aria-label="Username" aria-describedby="basic-addon1">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row align-items-center justify-content-center">
+                                            <div class="col-4">
+                                                <button id="btn_query" class="btn btn-primary btn-block">查询</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>*@
+                            <!-- 搜索框-->
+                        </div>
+                        <table id="list-menu-table"></table>
+                    </div>
+                </div>
+                <!-- /.card -->
+
+            </div>
+        </div>
+        <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+</div>
+<!-- /.content -->
+
+<div id="deleteInfo" class="modal fade">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="alert alert-success" role="alert">
+                删除成功！
+            </div>
+        </div>
+    </div>
+</div>

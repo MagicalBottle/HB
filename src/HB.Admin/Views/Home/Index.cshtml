@@ -1,0 +1,9 @@
+﻿@model HB.Models.SysAdmin
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>Admin/Index</h2>
+
+<a href="@Url.Action("Index", "Account", new { id=Model.Id })">@Model.UserName</a>
+<a href="@Url.Action("Logout", "Home")">登出</a>

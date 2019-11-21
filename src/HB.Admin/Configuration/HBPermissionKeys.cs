@@ -1,0 +1,131 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace HB.Admin.Configuration
+{
+
+    public class HBPermissionKeys
+    {
+        #region fileds
+
+        #region Admin人员管理
+        /// <summary>
+        /// 查看管理员
+        /// </summary>
+        public const string AdminView = "AdminView";
+
+        /// <summary>
+        /// 添加管理员
+        /// </summary>
+        public const string AdminAdd = "AdminAdd";
+
+        /// <summary>
+        /// 编辑管理员
+        /// </summary>
+        public const string AdminEdit = "AdminEdit";
+
+        /// <summary>
+        /// 删除管理员
+        /// </summary>
+        public const string AdminDelete = "AdminDelete";
+
+        /// <summary>
+        /// 查看账号拥有的权限
+        /// </summary>
+        public const string AdminPermission = "AdminPermission";
+
+        #endregion
+
+
+        #region Role角色管理
+        /// <summary>
+        /// 查看角色
+        /// </summary>
+        public const string RoleView = "RoleView";
+
+        /// <summary>
+        /// 添加角色
+        /// </summary>
+        public const string RoleAdd = "RoleAdd";
+
+        /// <summary>
+        /// 编辑角色
+        /// </summary>
+        public const string RoleEdit = "RoleEdit";
+
+        /// <summary>
+        /// 删除角色
+        /// </summary>
+        public const string RoleDelete = "RoleDelete";
+
+        /// <summary>
+        /// 角色分配权限
+        /// </summary>
+        public const string RolePermission = "RolePermission";
+        #endregion
+
+        #region Menu 菜单管理
+        /// <summary>
+        /// 查看管理员
+        /// </summary>
+        public const string MenuView = "MenuView";
+
+        /// <summary>
+        /// 添加管理员
+        /// </summary>
+        public const string MenuAdd = "MenuAdd";
+
+        /// <summary>
+        /// 编辑管理员
+        /// </summary>
+        public const string MenuEdit = "MenuEdit";
+
+        /// <summary>
+        /// 删除管理员
+        /// </summary>
+        public const string MenuDelete = "MenuDelete";
+        #endregion 
+
+        public static List<PermissionRecord> AllPermissions = new List<PermissionRecord>
+        {
+
+            new PermissionRecord(){Name="AdminView",Description="查看管理员" },
+            new PermissionRecord(){Name="AdminAdd",Description="添加管理员" },
+            new PermissionRecord(){Name="AdminEdit",Description="编辑管理员"},
+            new PermissionRecord(){Name="AdminDelete",Description="删除管理员"},
+            new PermissionRecord(){Name="AdminPermission",Description="查看账号拥有的权限"},
+
+            new PermissionRecord(){Name="MenuView",Description="查看菜单" },
+            new PermissionRecord(){Name="MenuAdd",Description="添加菜单" },
+            new PermissionRecord(){Name="MenuEdit",Description="编辑菜单"},
+            new PermissionRecord(){Name="MenuDelete",Description="删除菜单"},
+
+            new PermissionRecord(){Name="RoleView",Description="查看角色" },
+            new PermissionRecord(){Name="RoleAdd",Description="添加角色" },
+            new PermissionRecord(){Name="RoleEdit",Description="编辑角色"},
+            new PermissionRecord(){Name="RoleDelete",Description="删除角色"},
+            new PermissionRecord(){Name="RolePermission",Description="角色分配权限"}
+
+        };
+        #endregion
+    }
+
+    /// <summary>
+    /// 权限记录
+    /// </summary>
+    public class PermissionRecord
+    {
+        /// <summary>
+        /// 权限名称
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 权限说明
+        /// </summary>
+        public string Description { get; set; }
+
+    }
+}
