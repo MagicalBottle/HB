@@ -6,10 +6,6 @@ using FluentValidation;
 
 namespace HB.Admin.Validators
 {
-    public class HBAdminBaseValidator
-    {
-    }
-
     public abstract class HBAdminBaseValidator<T> : AbstractValidator<T> where T : class
     {
     }

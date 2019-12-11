@@ -1,29 +1,17 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using HB.Admin.Services;
-using HB.Data;
-using HB.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace HB.Api.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ValuesController : ControllerBase
+    public class ValuesController : ApiControllerBase
     {
-        private readonly ISysAdminService _sysAdminService;
-        public ValuesController(ISysAdminService sysAdminService)
+        public ValuesController()
         {
-            _sysAdminService = sysAdminService;
         }
         // GET api/values
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
-            _sysAdminService.UpdateAdmin(new SysAdmin(), new List<int>());
-            var model = _sysAdminService.Get(1);
             return new string[] { "value1", "value2" };
         }
 

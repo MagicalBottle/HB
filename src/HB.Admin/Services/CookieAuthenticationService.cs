@@ -44,8 +44,8 @@ namespace HB.Admin.Services
             AuthenticationProperties properties = new AuthenticationProperties
             {
                 IsPersistent = isPersistent,
-                IssuedUtc = DateTime.UtcNow
-                //ExpiresUtc = DateTimeOffset.MaxValue 最大值 。默认值14天
+                IssuedUtc = DateTime.UtcNow,
+                ExpiresUtc =new DateTimeOffset(DateTime.Now.AddMinutes(HBCachingDefaults.CacheTime)) //最大值 。默认值14天
             };
             await _httpContextAccessor.HttpContext.SignInAsync(HBAuthenticationDefaults.AdminAuthenticationScheme, principal, properties);
 

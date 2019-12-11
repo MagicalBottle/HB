@@ -67,6 +67,7 @@ namespace HB.Admin
                        option.LoginPath = HBAuthenticationDefaults.LoginPath;
                        option.AccessDeniedPath = HBAuthenticationDefaults.AccessDeniedPath;
                        option.Cookie.Name = HBAuthenticationDefaults.AdminAuthenticationScheme;
+                       
                    })
                    .AddCookie(HBAuthenticationDefaults.CustomerAuthenticationScheme, option =>
                    {
