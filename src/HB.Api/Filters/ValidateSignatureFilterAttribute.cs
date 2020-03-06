@@ -8,8 +8,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http.Internal;
 
 namespace HB.Api.Filters
 {
@@ -55,7 +58,21 @@ namespace HB.Api.Filters
                 {
                     #region 验参
 
-                    var param = context.HttpContext.Request.Form;
+                    var contentFromBody = string.Empty;
+                    context.HttpContext.Request.EnableRewind();//重复读取post body数据，Control中[FromBody]才能读取到数据
+                    //创建缓冲区存放Request.Body的内容，从而允许反复读取Request.Body的Stream
+                    using (var ms = new MemoryStream())
+                    {
+                        context.HttpContext.Request.Body.Position = 0;  //请求到控制器之后 Position重置0
+                        context.HttpContext.Request.Body.CopyTo(ms);
+                        context.HttpContext.Request.Body.Position = 0;
+                        using (var reader = new StreamReader(ms))
+                        {
+                            reader.BaseStream.Position = 0;
+                            contentFromBody = reader.ReadToEnd();
+                        }
+                    }
+                    var param = JsonConvert.DeserializeObject<Dictionary<string, string>>(contentFromBody);
 
                     if (!param.ContainsKey(SIGN_KEY) || string.IsNullOrEmpty(param[SIGN_KEY]))
                     {
@@ -69,14 +86,14 @@ namespace HB.Api.Filters
                         context.Result = ApiResult.Error_Signature(message: APPID + "参数不正确");
                         return;
                     }
-                    long nonce = 0; 
-                    if (!param.ContainsKey(NONCE) || string.IsNullOrEmpty(param[NONCE]) || !long.TryParse(param[NONCE],out nonce))
+                    long nonce = 0;
+                    if (!param.ContainsKey(NONCE) || string.IsNullOrEmpty(param[NONCE]) || !long.TryParse(param[NONCE], out nonce))
                     {
                         context.Result = ApiResult.Error_Signature(message: NONCE + "参数不正确");
                         return;
                     }
 
-                    if (DateTimeOffset.FromUnixTimeSeconds(nonce).ToLocalTime().AddSeconds(_config.NonceExpiresTime) < DateTimeOffset.Now)
+                    if (DateTimeOffset.FromUnixTimeMilliseconds(nonce).ToLocalTime().AddSeconds(_config.NonceExpiresTime) < DateTimeOffset.Now)
                     {
                         context.Result = ApiResult.Error_Signature(message: "请求超时");
                         return;
@@ -87,9 +104,10 @@ namespace HB.Api.Filters
 
                     #region user
 
-                    string apiUserCacheKey =string.Format( _config.ApiUserCacheKey,appid);
+                    string apiUserCacheKey = string.Format(_config.ApiUserCacheKey, appid);
 
-                    var user = _cache.Get<SysApiUser>(apiUserCacheKey,()=>{
+                    var user = _cache.Get<SysApiUser>(apiUserCacheKey, () =>
+                    {
                         return _sysApiUserService.GetUserByAppId(appid);
                     });
 

@@ -68,6 +68,7 @@ namespace HB.Api.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
+            user.AccessToken = tokenString;
             _workContext.User = user;
             return tokenString;
         }

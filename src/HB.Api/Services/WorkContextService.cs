@@ -43,7 +43,8 @@ namespace HB.Api.Services
                 var httpContext = _httpContextAccessor.HttpContext;
                 if (httpContext != null && httpContext.User.Identity.IsAuthenticated )
                 {
-                    var claim = httpContext.User.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Name);
+                    //var claim = httpContext.User.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Name); 
+                    var claim = httpContext.User.Claims.FirstOrDefault(c => c.Type == "AccessToken"); 
 
                     if (claim != null)
                     {
@@ -60,7 +61,7 @@ namespace HB.Api.Services
                 if (value != null)
                 {
                     //值不为空的时候，缓存
-                    string key = string.Format(_hBConfiguration.MebUserCacheKey, value.UserName);
+                    string key = string.Format(_hBConfiguration.MebUserCacheKey, value.AccessToken);
                     _cache.Set<MebUser>(key, value);
                 }
                 _cachedUser = value;

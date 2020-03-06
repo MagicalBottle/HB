@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Linq;
 using System.Net;
@@ -41,7 +42,9 @@ namespace HB.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(option => option.AddPolicy("cors", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().AllowAnyOrigin()));
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            
 
             HBConfiguration hbConfiguration = Configuration.GetSection("HBConfiguration").Get<HBConfiguration>();
             services.TryAddSingleton(hbConfiguration);
@@ -187,7 +190,12 @@ namespace HB.Api
                 }
                 return Task.CompletedTask;
             });
+            // Write streamlined request completion events, instead of the more verbose ones from the framework.
+            // To use the default framework request logging instead, remove this line and set the "Microsoft"
+            // level in appsettings.json to "Information".
+            app.UseSerilogRequestLogging();
 
+            app.UseCors("cors");
             //app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseMvc(routes =>

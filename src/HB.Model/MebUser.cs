@@ -34,7 +34,11 @@ namespace HB.Models
         /// </summary>
         public string NickName { get; set; }
 
-
+        /// <summary>
+        /// AccessToken
+        /// </summary>
+        [ExplicitKey]
+        public string AccessToken { get; set; }
 
     }
 }
