@@ -8,6 +8,7 @@ using HB.Api.Filters;
 using HB.Api.Models;
 using HB.Api.Services;
 using HB.Data;
+using LogDashboard;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -44,7 +45,7 @@ namespace HB.Api
         {
             services.AddCors(option => option.AddPolicy("cors", policy => policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().AllowAnyOrigin()));
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            
+            services.AddLogDashboard((option)=> { option.RootPath = AppDomain.CurrentDomain.BaseDirectory;option.FileFieldDelimiter = "$$$";option.FileEndDelimiter = "&end"; });
 
             HBConfiguration hbConfiguration = Configuration.GetSection("HBConfiguration").Get<HBConfiguration>();
             services.TryAddSingleton(hbConfiguration);
@@ -198,6 +199,8 @@ namespace HB.Api
             app.UseCors("cors");
             //app.UseAuthentication();
             app.UseHttpsRedirection();
+
+            app.UseLogDashboard();
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
