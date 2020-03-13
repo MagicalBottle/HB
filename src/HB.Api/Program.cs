@@ -23,7 +23,7 @@ namespace HB.Api
        .AddEnvironmentVariables()
        .Build();
 
-        public static void Main(string[] args)
+        public static void Main(string[] args)na
         {
             //https://stackoverflow.com/questions/46516359/filter-serilog-logs-to-different-sinks-depending-on-context-source
             Log.Logger = new LoggerConfiguration()
